@@ -16,12 +16,23 @@ import org.springframework.statemachine.state.State;
 import guru.springframework.msscssm.domain.PaymentEvent;
 import guru.springframework.msscssm.domain.PaymentState;
 import guru.springframework.msscssm.services.PaymentServiceImpl;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @EnableStateMachineFactory
 @Configuration
+@RequiredArgsConstructor
 public class StateMachineConfig extends StateMachineConfigurerAdapter<PaymentState, PaymentEvent> {
+
+    // Beans by bean-name
+    private final Action<PaymentState, PaymentEvent> preAuthAction;
+    private final Action<PaymentState, PaymentEvent> authAction;
+    private final Guard<PaymentState, PaymentEvent> paymentIdGuard;
+    private final Action<PaymentState, PaymentEvent> preAuthApprovedAction;
+    private final Action<PaymentState, PaymentEvent> preAuthDeclinedAction;
+    private final Action<PaymentState, PaymentEvent> authApprovedAction;
+    private final Action<PaymentState, PaymentEvent> authDeclinedAction;
 
     @Override
     public void configure(StateMachineStateConfigurer<PaymentState, PaymentEvent> states) throws Exception {
@@ -41,26 +52,26 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<PaymentSta
                 .source(PaymentState.NEW)
                 .target(PaymentState.NEW)   // because state doesn't neccesairaly changes, target can be NEW
                 .event(PaymentEvent.PRE_AUTHORIZE)
-                .action(preAuthAction())
-                .guard(paymentIdGuard())
+                .action(preAuthAction)
+                .guard(paymentIdGuard)
                 //source
                 //to target
                 //when event happens
                 .and()
                 .withExternal()
-                .source(PaymentState.NEW).target(PaymentState.PRE_AUTH).event(PaymentEvent.PRE_AUTH_APPROVED)
+                .source(PaymentState.NEW).target(PaymentState.PRE_AUTH).event(PaymentEvent.PRE_AUTH_APPROVED).action(preAuthApprovedAction)
                 .and()
                 .withExternal()
-                .source(PaymentState.NEW).target(PaymentState.PRE_AUTH_ERROR).event(PaymentEvent.PRE_AUTH_DECLINED)
+                .source(PaymentState.NEW).target(PaymentState.PRE_AUTH_ERROR).event(PaymentEvent.PRE_AUTH_DECLINED).action(preAuthDeclinedAction)
                 .and()
                 .withExternal()
-                .source(PaymentState.PRE_AUTH).target(PaymentState.PRE_AUTH).event(PaymentEvent.AUTHORIZE).action(authorize())
+                .source(PaymentState.PRE_AUTH).target(PaymentState.PRE_AUTH).event(PaymentEvent.AUTHORIZE).action(authAction)
                 .and()
                 .withExternal()
-                .source(PaymentState.PRE_AUTH).target(PaymentState.AUTH).event(PaymentEvent.AUTH_APPROVED)
+                .source(PaymentState.PRE_AUTH).target(PaymentState.AUTH).event(PaymentEvent.AUTH_APPROVED).action(authApprovedAction)
                 .and()
                 .withExternal()
-                .source(PaymentState.PRE_AUTH).target(PaymentState.AUTH_ERROR).event(PaymentEvent.AUTH_DECLINED);
+                .source(PaymentState.PRE_AUTH).target(PaymentState.AUTH_ERROR).event(PaymentEvent.AUTH_DECLINED).action(authDeclinedAction);
     }
 
 
@@ -77,7 +88,7 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<PaymentSta
 
         config.withConfiguration().listener(adapter);
     }
-
+/*
     public Guard<PaymentState,PaymentEvent> paymentIdGuard(){
 
         //if null give back a false, if true, return true
@@ -115,7 +126,7 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<PaymentSta
             }
         };
     }
-
+/*
     private Action<PaymentState, PaymentEvent> authorize() {
 
         return context -> {
@@ -138,5 +149,5 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<PaymentSta
         };
 
     }
-
+*/
 }
