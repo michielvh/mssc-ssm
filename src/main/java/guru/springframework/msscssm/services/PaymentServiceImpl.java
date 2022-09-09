@@ -1,6 +1,5 @@
 package guru.springframework.msscssm.services;
 
-import javax.swing.SwingWorker;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateMachine;
@@ -21,6 +20,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final StateMachineFactory<PaymentState, PaymentEvent> stateMachineFactory;
+    private final PaymentStateChangeInterceptor                   paymentStateChangeInterceptor;
 
     @Override
     public Payment newPayment(Payment payment) {
@@ -65,8 +65,9 @@ public class PaymentServiceImpl implements PaymentService {
 
 
     // get payment
-    // get a new inbstance of statemachine (give it id of payment
+    // get a new inbstance of statemachine (give it id of payment)
     // stop the statmachine
+    // 2. Add an interceptor to detect statechanges (paymentStateChangeInterceptor)
     // set state of statemachine to the state of the payment from the DB
     // restart statemachine
     // return statemachine
@@ -81,6 +82,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         sm.getStateMachineAccessor()
                 .doWithAllRegions(sma -> {
+                    sma.addStateMachineInterceptor(paymentStateChangeInterceptor);
                     sma.resetStateMachine(new DefaultStateMachineContext<>(payment.getState(),null,null,null));
                 });
         sm.start();
