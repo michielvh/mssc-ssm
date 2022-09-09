@@ -40,5 +40,21 @@ class StateMachineConfigTest {
 
         System.out.println(sm.getState().toString());
 
+
+        //AUTH test
+
+        sm.sendEvent(PaymentEvent.AUTHORIZE);
+
+        System.out.println(sm.getState().toString());
+
+        sm.sendEvent(PaymentEvent.AUTH_APPROVED);
+
+        System.out.println(sm.getState().toString());
+
+        // no longer in new state but in pre_auth state, this will not affect state
+        sm.sendEvent(PaymentEvent.AUTH_DECLINED);
+
+        System.out.println(sm.getState().toString());
+
     }
 }
