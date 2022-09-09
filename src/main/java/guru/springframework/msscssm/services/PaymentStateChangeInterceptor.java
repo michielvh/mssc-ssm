@@ -34,7 +34,14 @@ public class PaymentStateChangeInterceptor extends StateMachineInterceptorAdapte
                     PaymentServiceImpl.PAYMENT_ID_HEADER,-1)))
                     .ifPresent(paymentId -> {
                         Payment payment = paymentRepository.getOne(paymentId);
+                        System.out.println("PreStateChange : payment from DB PaymentState = " + payment.getState());
                         payment.setState(state.getId());
+                        System.out.println("PreStateChange : stateMachine state = " + stateMachine.getState());
+                        System.out.println("PreStateChange : transition source = " + transition.getSource());
+                        System.out.println("PreStateChange : transition target = " + transition.getTarget());
+                        System.out.println("PreStateChange : STATE_ID of state : " +state.getId());
+                        System.out.println("PreStateChange : message : " +message.toString());
+                        System.out.println("PreStateChange : Because of payload of message pre_auth_approved, transition source will go to transition target, defined in StateMachineConfig how the flow must go");
                         paymentRepository.save(payment);
                     });
         });
