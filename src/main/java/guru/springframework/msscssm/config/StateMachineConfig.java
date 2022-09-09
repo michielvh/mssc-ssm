@@ -1,7 +1,10 @@
 package guru.springframework.msscssm.config;
 
 import java.util.EnumSet;
+import java.util.Random;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.statemachine.action.Action;
 import org.springframework.statemachine.config.EnableStateMachineFactory;
 import org.springframework.statemachine.config.StateMachineConfigurerAdapter;
 import org.springframework.statemachine.config.builders.StateMachineConfigurationConfigurer;
@@ -11,6 +14,7 @@ import org.springframework.statemachine.listener.StateMachineListenerAdapter;
 import org.springframework.statemachine.state.State;
 import guru.springframework.msscssm.domain.PaymentEvent;
 import guru.springframework.msscssm.domain.PaymentState;
+import guru.springframework.msscssm.services.PaymentServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -36,6 +40,7 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<PaymentSta
                 .source(PaymentState.NEW)
                 .target(PaymentState.NEW)   // because state doesn't neccesairaly changes, target can be NEW
                 .event(PaymentEvent.PRE_AUTHORIZE)
+                .action(preAuthAction())
                 //source
                 //to target
                 //when event happens
@@ -58,5 +63,35 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<PaymentSta
         };
 
         config.withConfiguration().listener(adapter);
+    }
+
+
+
+    // goes first from new to new because of event Pre_authorize
+    // than does this action  which sends event of pre_auth_approved
+    // when source==NEW && target == Pre_AUTH && event == PRE_AUTH_APPROVED
+    // state == PRE_AUTH
+    // when source==NEW && target == Pre_AUTH && event == PRE_AUTH_DECLINED
+    // state == PRE_AUTH_ERROR
+    public Action<PaymentState,PaymentEvent> preAuthAction(){
+
+        return context -> {
+            System.out.println("PreAuth was called!!!");
+
+            // random testcase for 80% of the time approved
+            if(new Random().nextInt(10)<8){
+                System.out.println("Approved");
+                context.getStateMachine().sendEvent(MessageBuilder.withPayload(PaymentEvent.PRE_AUTH_APPROVED)
+                        .setHeader(PaymentServiceImpl.PAYMENT_ID_HEADER,context.getMessageHeader(PaymentServiceImpl.PAYMENT_ID_HEADER))
+                        .build());
+
+            }
+            else {
+                System.out.println("Declined! no credit!");
+                context.getStateMachine().sendEvent(MessageBuilder.withPayload(PaymentEvent.PRE_AUTH_DECLINED)
+                        .setHeader(PaymentServiceImpl.PAYMENT_ID_HEADER,context.getMessageHeader(PaymentServiceImpl.PAYMENT_ID_HEADER))
+                        .build());
+            }
+        };
     }
 }
